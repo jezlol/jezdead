@@ -1,6 +1,4 @@
-from pysnmp.hlapi import SnmpEngine, CommunityData, UdpTransportTarget, ContextData, ObjectType, ObjectIdentity, getCmd
-
-from pysnmp.hlapi import *
+from pysnmp.hlapi import SnmpEngine, CommunityData, UdpTransportTarget, ContextData, ObjectType, ObjectIdentity, getCmd, setCmd, OctetString
 
 # ตั้งค่าข้อมูลพื้นฐาน
 router_ip = '172.16.11.138'  # IP ของเราเตอร์
