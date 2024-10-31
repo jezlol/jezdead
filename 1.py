@@ -1,40 +1,73 @@
 from pysnmp.hlapi import SnmpEngine, CommunityData, UdpTransportTarget, ContextData, ObjectType, ObjectIdentity, getCmd
 
-def get_snmp(oid, target, community="public"):
-    """
-    Perform an SNMP GET request.
+from pysnmp.hlapi import *
 
-    Parameters:
-    - oid: The OID to query.
-    - target: The IP address of the SNMP agent (router).
-    - community: SNMP community string (default is 'public').
+# ตั้งค่าข้อมูลพื้นฐาน
+router_ip = '172.16.11.138'  # IP ของเราเตอร์
+community = 'public'          # ชื่อชุมชน
+sys_contact_email = 'thanpaarnjez@email.kmutnb.ac.th'  # เปลี่ยนเป็นอีเมลของนักศึกษา
+student_name = 'Thanormsak Sudsee'  # เปลี่ยนชื่อของนักศึกษา
+
+# OID ที่ใช้ในการดึงข้อมูล
+sys_descr_oid = '1.3.6.1.2.1.1.1.0'  # sysDescr
+sys_uptime_oid = '1.3.6.1.2.1.1.3.0'  # sysUpTime
+sys_contact_oid = '1.3.6.1.2.1.1.4.0'  # sysContact
+sys_name_oid = '1.3.6.1.2.1.1.5.0'  # sysName
+
+def get_snmp(oid):
     """
-    # Create the iterator for the SNMP GET command
+    ทำการดึงข้อมูล SNMP
+    """
     iterator = getCmd(
         SnmpEngine(),
         CommunityData(community),
-        UdpTransportTarget((target, 161)),
+        UdpTransportTarget((router_ip, 161)),
         ContextData(),
         ObjectType(ObjectIdentity(oid))
     )
 
-    # Execute the command and handle the response
     errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
 
-    # Display results in terminal
     if errorIndication:
         print(f"Error: {errorIndication}")
     elif errorStatus:
         print(f"Error: {errorStatus.prettyPrint()} at {errorIndex}")
     else:
         for varBind in varBinds:
-            print(f"{varBind[0].prettyPrint()} = {varBind[1].prettyPrint()}")
+            return varBind[1]  # คืนค่าข้อมูล
 
-# Replace these values with the correct IP and OID
-router_ip = "172.16.11.138"  # Replace with your router's IP address
-# Example OID for IP address of interface e0/0; adjust based on your router's configuration.
-interface_oid = "1.3.6.1.2.1.4.20.1.1"  # OID for IP addresses of interfaces
+def set_snmp(oid, value):
+    """
+    ทำการแก้ไขข้อมูล SNMP
+    """
+    iterator = setCmd(
+        SnmpEngine(),
+        CommunityData(community, mpModel=0),
+        UdpTransportTarget((router_ip, 161)),
+        ContextData(),
+        ObjectType(ObjectIdentity(oid), value)
+    )
 
-# Running the SNMP query
-print(f"Performing SNMP GET on {router_ip} for OID: {interface_oid}")
-get_snmp(interface_oid, router_ip)
+    errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
+
+    if errorIndication:
+        print(f"Error: {errorIndication}")
+    elif errorStatus:
+        print(f"Error: {errorStatus.prettyPrint()} at {errorIndex}")
+    else:
+        print(f"Successfully set {oid} to {value}")
+
+# แสดงข้อมูลระบบ
+print("Fetching system information...")
+sys_descr = get_snmp(sys_descr_oid)
+sys_uptime = get_snmp(sys_uptime_oid)
+
+print(f"System Description: {sys_descr}")
+print(f"System Uptime: {sys_uptime}")
+
+# ตั้งค่าข้อมูลใหม่
+print("\nUpdating system information...")
+set_snmp(sys_contact_oid, OctetString(sys_contact_email))  # เปลี่ยนชื่อผู้ติดต่อ
+set_snmp(sys_name_oid, OctetString(student_name))  # เปลี่ยนชื่อเครื่อง
+
+print("\nSystem information updated successfully.")
